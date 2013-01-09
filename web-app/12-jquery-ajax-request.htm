@@ -57,16 +57,17 @@
             });
             function invokeAjax(){
                 $.getJSON(wUrl, function(data) {
-                    var weather = {
+                    var weatherObj = {
                         condition:data.query.results.channel.item.condition,
                         location:data.query.results.channel.location
                     }
-                    processHtml(weather);
+                    processHtml(weatherObj);
                 })
                 .success(function() { alert("second success"); })
                 .error(function() { alert("error"); })
                 .complete(function() { alert("complete"); });
             }
+
 
 
             function processHtml(weatherObj) {
@@ -89,30 +90,28 @@
             //Defered Ajax
             $("#dBtn").click(function(){
 
-            var RestService = {
-                init: function() {
-                    this.fetch().done(function() {
-                        processHtml(myDeferWeather);
-                    });
-                },
+                var RestService = {
+                    init: function() {
+                        this.fetch().done(function() {
+                            processHtml(myDeferWeather);
+                        });
+                    },
 
-                fetch: function() {
-                    //create a deferred object
-                    var dfd = $.Deferred();
-                    $.getJSON(wUrl, function(data) {
-                        var chlObj = data.query.results.channel;
-                        self.curWeather = {
-                            created: data.query.created,
-                            city: chlObj.location.city,
-                            state: chlObj.location.region,
-                            wind: chlObj.wind.chill
-                        };
-                        console.log("Recieved the rest response"+ self.curWeather.created);
-                        dfd.resolve("hurray");
-                    });
-                    return dfd.promise();
-                }
-            }
+                    fetch: function() {
+                        //create a deferred object
+                        var dfd = $.Deferred();
+                        $.getJSON(wUrl, function(data) {
+                            myDeferWeather = {
+                                condition:data.query.results.channel.item.condition,
+                                location:data.query.results.channel.location
+                            }
+                            dfd.resolve("hurray");
+                        });
+                        return dfd.promise();
+                    }
+                };
+                RestService.init();
+
             });
 
 
