@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8" />
+	<title>JQuery $.ajax() Sample</title>
+    <link href="css/12-jquery-ajax-request.css" rel="stylesheet" type="text/css">
+    <script type="text/javascript" src="js/jquery.min.js"></script>
+
+	<script>
+        $(document).ready(function() {
+            var baseloc = "http://localhost:8080/RestServer/";
+            var wUrl = "http://localhost:8080/RestServer/ajax/weather?format=json&callback=?";
+            var yahooUrl= 'http://query.yahooapis.com/v1/public/yql?q=select%20*%20from%20weather.forecast%20where%20woeid%3D12770508&format=json&diagnostics=true&callback=?';
+
+            var myDeferWeather;
+
+            //$.ajax() Example to Get List of People
+            $("#peopleBtn").click(function(){
+                var peopleUrl = "http://localhost:8080/RestServer/ajax/jsonPeople/";
+                $.ajax({
+                    url: peopleUrl,
+                    cache: false,
+                    dataType: 'json', // Choosing a JSON datatype
+                    success: showAlert
+                }); 
+            });
+            function showAlert(result){
+                myresult = result;
+                console.log(result);
+                alert(myresult.people[0].name);
+            }
+
+            //$.post() example with
+            $("#addPerson").click(function(){
+                var personUrl = "http://localhost:8080/RestServer/ajax/save/";
+                $.post(personUrl,{firstName:"john",lastName:"Hello World"})
+                     .success(function (result){
+                       alert(result);
+
+                     })
+                     .error(function() { alert("error occured");})
+                     .complete(function() { alert("complete"); });
+            });
+
+            //$("#elem").load example
+            $("#loadPage").click( function(){
+                      var loadUrl = "http://localhost:8080/RestServer/zengarden-sample.html #preamble";
+                      $("#loadDiv").load(loadUrl, function() {
+                          alert('Load was performed.');
+                          $("#loadDiv").slideUp(5000);
+                      })
+            });
+
+            //$.json() and Deferred Example
+            $("#wBtn").click(function(){
+                 invokeAjax();
+            });
+            function invokeAjax(){
+                $.getJSON(wUrl, function(data) {
+                    var weather = {
+                        condition:data.query.results.channel.item.condition,
+                        location:data.query.results.channel.location
+                    }
+                    processHtml(weather);
+                })
+                .success(function() { alert("second success"); })
+                .error(function() { alert("error"); })
+                .complete(function() { alert("complete"); });
+            }
+
+
+            function processHtml(weatherObj) {
+                var u = 'f';
+                var info = weatherObj.condition;
+                var loc = weatherObj.location;
+                $('#wxIcon').css({
+                    backgroundPosition: '-' + (61 * info.code) + 'px 0'
+                }).attr({
+                            title: info.text
+                        });
+                var imgloc = baseloc+"images/wicons-cloudy.gif";
+                if(info.text=="cloudy")
+                    imgloc = baseloc+"images/wicons-cloudy.gif";
+                $('#wxIcon2').append('<img src="'+imgloc+'" width="34" height="34" title="' + info.text + '" />');
+                $('#wxTemp').html(info.temp + '&deg;' + (u.toUpperCase()));
+                $("#wxIntro").text("Current in " + loc.city +"," + loc.region);
+            }
+
+            //Defered Ajax
+            $("#dBtn").click(function(){
+
+            var RestService = {
+                init: function() {
+                    this.fetch().done(function() {
+                        processHtml(myDeferWeather);
+                    });
+                },
+
+                fetch: function() {
+                    //create a deferred object
+                    var dfd = $.Deferred();
+                    $.getJSON(wUrl, function(data) {
+                        var chlObj = data.query.results.channel;
+                        self.curWeather = {
+                            created: data.query.created,
+                            city: chlObj.location.city,
+                            state: chlObj.location.region,
+                            wind: chlObj.wind.chill
+                        };
+                        console.log("Recieved the rest response"+ self.curWeather.created);
+                        dfd.resolve("hurray");
+                    });
+                    return dfd.promise();
+                }
+            }
+            });
+
+
+
+        });
+
+    </script>
+</head>
+<body>
+   <h1> JQuery Weather Example </h1>
+   <div id="buttonBar">
+       <input id="peopleBtn" type="button" value="Get People $.ajax()">
+       <input id="addPerson" type="button" value="Add Person $.post()">
+       <input id="loadPage" type="button" value="Load ExternalDiv load()">
+
+       <input id="wBtn" type="button" value="Get Weather">
+       <input id="dBtn" type="button" value="Defered Ajax">
+
+   </div>
+
+   <br><br>
+   
+   <div id="loadDiv"></div>
+
+   <br><br>
+   <div id="wxWrap">
+        <span id="wxIntro">
+            Currently in Manhattan, NY: 
+        </span>
+        <span id="wxIcon2"></span>
+        <span id="wxTemp"></span>
+    </div>
+</body>
+</html>
